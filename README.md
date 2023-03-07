@@ -52,7 +52,7 @@ We wish all participants the best of luck and are excited to see what you accomp
 
 ## Timeline
 
-<Image src="/images/projects/gecco/2023/timeline-2023.png" alt="timeline" />
+<Image src="/images/timeline-2023.png" alt="timeline" />
 
 **NOTE**: The submission portal will remain open after **30 June 2023**. Submissions received after that date will not be taken into consideration for the competition, but they will still appear on the leaderboard.
 
