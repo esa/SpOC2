@@ -1,6 +1,6 @@
 Here you can find the information you need in order to take part in the [GECCO 2023 Space Optimisation Competition (SpOC)](/news/2023-02-20-SpoC_2023_announcement) organised by the Advanced Concepts Team (ACT).
 
-<Image src="/images/projects/gecco/2023/spoc2_teaser_1440p.png" align="center" alt="SpOC 2023"/>
+<Image src="./images/spoc2_teaser_1440p.png" align="center" alt="SpOC 2023"/>
 
 
 # SpOC 2: Settling New Mars
