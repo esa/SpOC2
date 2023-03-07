@@ -68,12 +68,13 @@ We wish all participants the best of luck and are excited to see what you accomp
 
 - [Optimise platform for problem descriptions and submissions](https://optimise.esa.int/)
 - [Advanced Concepts Team webpage](https://www.esa.int/gsp/ACT/)
+- [GECCO 2023](https://gecco-2023.sigevo.org/HomePage)
 
 ---
 
 ## Contact
 
-- **Our primary means of communication with competitiors will be the Discussions feature on this repository.** Please use this feature to ask any questions you may have about the challenges or to exchange information with us. We will do our best to respond to your questions in a timely manner.
+- **Our primary means of communication with competitors will be the Discussions feature on this repository.** Please use this feature to ask any questions you may have about the challenges or to exchange information with us. We will do our best to respond to your questions in a timely manner.
 
 - If you encounter a bug in the code, please use this repository's "Issues" feature to report it.
 
