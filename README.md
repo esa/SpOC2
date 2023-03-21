@@ -54,16 +54,11 @@ Here are the guidelines to ensure a fair and exciting challenge:
 
 We wish all participants the best of luck and are excited to see what you accomplish!
 
-
----
-
 ## Timeline
 
 <Image src="./images/timeline-2023.png" alt="timeline" />
 
 **NOTE**: The submission portal will remain open after **30 June 2023**. Submissions received after that date will not be taken into consideration for the competition, but they will still appear on the leaderboard.
-
----
 
 ## How to submit
 
@@ -76,8 +71,6 @@ We wish all participants the best of luck and are excited to see what you accomp
 - [Optimise platform for problem descriptions and submissions](https://optimise.esa.int/)
 - [Advanced Concepts Team webpage](https://www.esa.int/gsp/ACT/)
 - [GECCO 2023](https://gecco-2023.sigevo.org/HomePage)
-
----
 
 ## Contact
 
