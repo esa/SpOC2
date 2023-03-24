@@ -35,7 +35,7 @@ With the communications network established, scientific exploration of New Mars 
 
 ## Scope of the Competition
 
- Your mission is to tackle up to three optimization challenges associated with the design of the three phases of the New Mars settlement initiative. Starting from **1 April 2022**, you will have three months to tackle these challenges and compete for the top spot on the SpOC leaderboard. 
+ Your mission is to tackle up to three optimization challenges associated with the design of the three phases of the New Mars settlement initiative. Starting from **1 April 2023**, you will have three months to tackle these challenges and compete for the top spot on the SpOC leaderboard. 
  
  **Detailed technical descriptions for the three challenges to be solved will be made available on the [Optimise platform](https://optimise.esa.int/) from the same date.** 
  
