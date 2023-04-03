@@ -123,7 +123,7 @@ To submit a solution, you can prepare a submission file with the [submission hel
 
 ```python
 from submisson_helper import create_submission
-create_submission("spoc-quantum-constellations","quantum-constellations",x,"submission_file.json","submission_name","submission_description")
+create_submission("spoc-2-quantum-communications-constellations","quantum-communications-constellations",x,"submission_file.json","submission_name","submission_description")
 ```
 
 and [submit it](https://optimize.esa.int/submit). 
@@ -140,8 +140,8 @@ and [submit it](https://optimize.esa.int/submit).
     [
         {
                 "decisionVector": [ x1, x2, ... , x100 ],
-                "problem": "quantum-constellations",
-                "challenge": "spoc-quantum-constellations",
+                "problem": "quantum-communications-constellations",
+                "challenge": "spoc-2-quantum-communications-constellations",
         }
     ] 
     ```
