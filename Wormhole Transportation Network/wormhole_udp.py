@@ -111,6 +111,7 @@ class wormhole_traversal_udp:
         self._eq_constraints = None
         self._iq_constraints = None
         self._all_constraints_satisfied = True
+        self._scaling = 10000
 
         # Reset the fitness attributes
         self._reset_fitness_attributes()
@@ -349,6 +350,8 @@ class wormhole_traversal_udp:
 
                 cost_ys[ship] += self.network[src][tgt]["v"]
 
+        cost_ys *= self._scaling
+
         cost_ax.bar(xs, cost_ys, color="magenta")
 
         cost_ax.set_title("Total path cost per ship")
@@ -502,7 +505,7 @@ class wormhole_traversal_udp:
 
                 variances[ship] += self.network[src][tgt]["v"]
 
-        self._fitness.append(variances.max())
+        self._fitness.append(variances.max() * self._scaling)
 
     def _evaluate(
         self,
@@ -808,7 +811,7 @@ class wormhole_traversal_udp:
 
     def example(
         self,
-        filename: FSPath = "./data/wormholes/example.npy",
+        filename: FSPath = "./data/spoc2/wormholes/example.npy",
     ) -> np.ndarray:
         """
         Return a minimal chromosome that satisfies the problem constraints.
