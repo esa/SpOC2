@@ -714,7 +714,7 @@ def combine_scores(points):
         return 0.0
     else:
         hv = pg.hypervolume(filtered_points)
-        return -hv.compute(ref_point)
+        return -hv.compute(ref_point) * 10000
 
 # Optimize udp        
 udp = constellation_udp()
