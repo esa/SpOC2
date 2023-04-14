@@ -24,7 +24,7 @@ import networkx as nx
 from loguru import logger
 
 logger.remove()
-logger.add(sys.stdout, format="{time:HH:mm:ss.SS} | {level} | {message}")
+logger.add(sys.stdout, format="{time:HH:mm:ss.SS} | {process} | {level} | {message}")
 
 # --------------------------------------
 # Type definitions
@@ -111,6 +111,8 @@ class wormhole_traversal_udp:
         self._eq_constraints = None
         self._iq_constraints = None
         self._all_constraints_satisfied = True
+        self._multiplier = 10.0
+        self._fitness_scaling = 10000
 
         # Reset the fitness attributes
         self._reset_fitness_attributes()
@@ -141,9 +143,7 @@ class wormhole_traversal_udp:
             filename = Path(filename)
 
             if not filename.exists():
-                raise ValueError(
-                    f"The specified file ({filename.absolute()}) does not exist."
-                )
+                raise ValueError(f"The specified file ({filename.absolute()}) does not exist.")
 
             loaded = np.load(filename)
 
@@ -194,9 +194,7 @@ class wormhole_traversal_udp:
             # The delays are already in a NumPy array
             self.delays = loaded_delays.astype(np.float32)
 
-            logger.info(
-                f"Loaded a network with {self.n_bh} nodes and {self.n_wh} edges"
-            )
+            logger.info(f"Loaded a network with {self.n_bh} nodes and {self.n_wh} edges")
 
         except Exception as e:
             raise ValueError(f"Error loading the database from {filename}:\n{e}")
@@ -213,9 +211,7 @@ class wormhole_traversal_udp:
                 An equality constraint (should be =0 to be considered satisfied).
         """
         self._eq_constraints.append(constraint)
-        self._all_constraints_satisfied = self._all_constraints_satisfied and (
-            constraint == 0
-        )
+        self._all_constraints_satisfied = self._all_constraints_satisfied and (constraint == 0)
 
     def _update_ics(
         self,
@@ -230,9 +226,7 @@ class wormhole_traversal_udp:
         """
 
         self._iq_constraints.append(constraint)
-        self._all_constraints_satisfied = self._all_constraints_satisfied and (
-            constraint <= 0.0
-        )
+        self._all_constraints_satisfied = self._all_constraints_satisfied and (constraint <= 0.0)
 
     def _reset_fitness_attributes(self) -> None:
         self._fitness = []
@@ -262,19 +256,13 @@ class wormhole_traversal_udp:
         """
 
         if len(self._fitness) != self.get_nobj():
-            raise ValueError(
-                f"Wrong number of fitness values: expected {self.get_nobj()}, got {len(self._fitness)}."
-            )
+            raise ValueError(f"Wrong number of fitness values: expected {self.get_nobj()}, got {len(self._fitness)}.")
 
         if len(self._eq_constraints) != self.get_nec():
-            raise ValueError(
-                f"Wrong number of equality constraints: expected {self.get_nec()}, got {len(self._eq_constraints)}."
-            )
+            raise ValueError(f"Wrong number of equality constraints: expected {self.get_nec()}, got {len(self._eq_constraints)}.")
 
         if len(self._iq_constraints) != self.get_nic():
-            raise ValueError(
-                f"Wrong number of inequality constraints: expected {self.get_nic()}, got {len(self._iq_constraints)}."
-            )
+            raise ValueError(f"Wrong number of inequality constraints: expected {self.get_nic()}, got {len(self._iq_constraints)}.")
 
         self._fitness.extend(self._eq_constraints)
         self._fitness.extend(self._iq_constraints)
@@ -299,7 +287,7 @@ class wormhole_traversal_udp:
 
         if isinstance(x, np.ndarray):
             # Extract the paths from a chromosome
-            paths = self._chromosome_to_paths(x)
+            (paths, _) = self._chromosome_to_paths(x)
 
         else:
             # Make a copy of the paths
@@ -325,12 +313,12 @@ class wormhole_traversal_udp:
         # * Path mean * #
         path_mean_ys = np.zeros((self.n_ships,))
 
-        for ship, path in enumerate(paths):
+        for ship_idx, path in enumerate(paths):
             for src, tgt in zip(path[:-1], path[1:]):
                 if src not in self.network.nodes or tgt not in self.network[src]:
                     break
 
-                path_mean_ys[ship] += self.network[src][tgt]["m"]
+                path_mean_ys[ship_idx] += self.network[src][tgt]["m"]
 
         path_mean_ax.bar(xs, path_mean_ys, color="orangered")
 
@@ -340,14 +328,9 @@ class wormhole_traversal_udp:
         path_mean_ax.set_xticks(xs)
 
         # * Path cost (accumulated variance) * #
-        cost_ys = np.zeros((self.n_ships,))
+        cost_ys = self._accumulate_variances(paths)
 
-        for ship, path in enumerate(paths):
-            for src, tgt in zip(path[:-1], path[1:]):
-                if src not in self.network.nodes or tgt not in self.network[src]:
-                    break
-
-                cost_ys[ship] += self.network[src][tgt]["v"]
+        cost_ys *= self._fitness_scaling
 
         cost_ax.bar(xs, cost_ys, color="magenta")
 
@@ -357,11 +340,13 @@ class wormhole_traversal_udp:
         cost_ax.set_xticks(xs)
 
         # * Arrival window * #
-        _, window_ys = self._compute_arrival_gaps(paths)
+        (gaps, window_ys) = self._compute_arrival_gaps(paths)
 
         window_ax.bar(xs, window_ys, color="forestgreen")
 
         margin = (self.window - (window_ys.max() - window_ys.min())) / 2
+
+        logger.info(f"Window ys: {window_ys} | margin: {margin} | max gap: {gaps.max()}")
 
         window_ax.axhline(
             y=window_ys.max() + margin,
@@ -369,6 +354,7 @@ class wormhole_traversal_udp:
             linestyle="--",
             linewidth=0.5,
         )
+
         window_ax.axhline(
             y=window_ys.min() - margin,
             color="#aaaaaa",
@@ -421,12 +407,14 @@ class wormhole_traversal_udp:
                 Chromosome.
 
         Returns:
-            PathList:
-                A list of paths.
+            Tuple[PathList, int]:
+                - A list of paths
+                - The maximum path length
         """
-        # Extract the paths
+        # Extract the paths and the maximal path length
         paths = []
 
+        max_length = 0
         for idx in range(self.n_ships):
             # Extract the ship's path
             path = x[idx * self.jump_limit : (idx + 1) * self.jump_limit]
@@ -443,7 +431,10 @@ class wormhole_traversal_udp:
             # Add the path to the list of paths
             paths.append(path)
 
-        return paths
+            if len(path) > max_length:
+                max_length = len(path)
+
+        return (paths, max_length)
 
     def _compute_arrival_gaps(
         self,
@@ -457,27 +448,91 @@ class wormhole_traversal_udp:
                 Ship paths.
 
         Returns:
-            np.ndarray:
-                The pairwise distances.
+            Tuple(np.ndarray, np.ndarray):
+                - The pairwise distances.
+                - The arrival times.
         """
         arrival_times = np.array(
-            [
-                nx.path_weight(self.network, path, weight="m")
-                if nx.is_path(self.network, path)
-                else idx * self.window
-                for idx, path in enumerate(paths)
-            ],
+            [nx.path_weight(self.network, path, weight="m") if nx.is_path(self.network, path) else idx * self.window for idx, path in enumerate(paths)],
             dtype=np.float32,
         )
 
         # Add the delays
         arrival_times += self.delays
-        arrival_times = arrival_times[None, :]
 
         # Compute the pairwise gaps
-        gaps = np.abs(arrival_times - arrival_times.T)
+        gaps = arrival_times[None, :]
+        gaps = np.abs(gaps - gaps.T)
 
-        return gaps, arrival_times[0]
+        return (gaps, arrival_times)
+
+    def _compute_variances(
+        self,
+        paths: PathList,
+    ):
+        """
+        Visits for each node ordered by time.
+
+        Args:
+            paths (PathList):
+                The paths taken by the 12 ships.
+        """
+
+        visits = {}
+
+        for ship_idx, path in enumerate(paths):
+            time = self.delays[ship_idx]
+            for jump, (src, tgt) in enumerate(zip(path[:-1], path[1:])):
+                if src not in self.network.nodes or tgt not in self.network[src]:
+                    break
+
+                visits.setdefault(src, [])
+                visits[src].append((ship_idx, jump, time))
+                time += self.network[src][tgt]["m"]
+
+            # The destination node
+            last_node = path[-1]
+            if last_node in self.network.nodes:
+                visits.setdefault(last_node, [])
+                visits[last_node].append((ship_idx, len(path) - 1, time))
+
+        # Order visits by time in ascending order
+        # and store the ship/jump tuples with their order.
+        traversals = {}
+        for node in visits:
+            sorted_visits = sorted(visits[node], key=lambda visit: visit[2])
+            for order, visit in enumerate(sorted_visits):
+                traversals[(visit[0], visit[1])] = 1e10 if order >= 10 else self._multiplier**order
+
+        return traversals
+
+    def _accumulate_variances(
+        self,
+        paths: PathList,
+    ):
+        """
+        Compute the cost of each path, taking into account revisit penalties.
+
+        Args:
+            paths (PathList):
+                Paths for each of the 12 ships.
+        """
+
+        # Edge traversals with corrected variance
+        traversals = self._compute_variances(paths)
+
+        # Ship variances
+        variances = np.zeros((self.n_ships,))
+
+        # Make sure that we are considering only valid paths
+        for ship_idx, path in enumerate(paths):
+            for jump, (src, tgt) in enumerate(zip(path[:-1], path[1:])):
+                if src not in self.network.nodes or tgt not in self.network[src]:
+                    break
+
+                variances[ship_idx] += self.network[src][tgt]["v"] * traversals[(ship_idx, jump)]
+
+        return variances
 
     def _compute_fitness(
         self,
@@ -493,16 +548,9 @@ class wormhole_traversal_udp:
                 Paths for each of the 12 ships.
         """
 
-        variances = np.zeros((self.n_ships,))
+        variances = self._accumulate_variances(paths)
 
-        for ship, path in enumerate(paths):
-            for src, tgt in zip(path[:-1], path[1:]):
-                if src not in self.network.nodes or tgt not in self.network[src]:
-                    break
-
-                variances[ship] += self.network[src][tgt]["v"]
-
-        self._fitness.append(variances.max())
+        self._fitness.append(variances.max() * self._fitness_scaling)
 
     def _evaluate(
         self,
@@ -553,11 +601,11 @@ class wormhole_traversal_udp:
         self._reset_fitness_attributes()
 
         # Convert the chromosome into a list of paths.
-        paths = self._chromosome_to_paths(x)
+        (paths, _) = self._chromosome_to_paths(x)
 
         if log:
-            for idx, path in enumerate(paths):
-                logger.info(f"Ship {idx + 1:>2d} | path length: {len(path):>3d}")
+            for ship_idx, path in enumerate(paths):
+                logger.info(f"Ship {ship_idx + 1:>2d} | path length: {len(path):>3d}")
 
         """
         1. Equality constraints.
@@ -572,10 +620,8 @@ class wormhole_traversal_udp:
                 origin_ec[ship_idx] = 0
 
         if log:
-            for idx, ec in enumerate(origin_ec):
-                logger.info(
-                    f"Ship {idx + 1:>2d} origin constraint: {('' if ec == 0 else 'not ')}satisfied"
-                )
+            for ship_idx, ec in enumerate(origin_ec):
+                logger.info(f"Ship {ship_idx + 1:>2d} origin constraint: {('' if ec == 0 else 'not ')}satisfied")
 
         # Update the equality constraints
         self._update_ecs(origin_ec.sum())
@@ -589,10 +635,8 @@ class wormhole_traversal_udp:
                 path_ec[ship_idx] = 0
 
         if log:
-            for idx, ec in enumerate(path_ec):
-                logger.info(
-                    f"Ship {idx + 1:>2d} path constraint: {('' if ec == 0 else 'not ')}satisfied"
-                )
+            for ship_idx, ec in enumerate(path_ec):
+                logger.info(f"Ship {ship_idx + 1:>2d} path constraint: {('' if ec == 0 else 'not ')}satisfied")
 
         # Update the equality constraints
         self._update_ecs(path_ec.sum())
@@ -611,9 +655,7 @@ class wormhole_traversal_udp:
                 for ship2 in range(ship1 + 1, self.n_ships):
                     gap = gaps[ship1][ship2]
                     inout = "inside" if gap <= self.window else "outside"
-                    logger.info(
-                        f"Gap for ships {ship1 + 1:>2d} and {ship2 + 1:>2d}: {gap:>2.8f} ({inout} the window)"
-                    )
+                    logger.info(f"Gap for ships {ship1 + 1:>2d} and {ship2 + 1:>2d}: {gap:>2.8f} ({inout} the window)")
 
         # Update the inequality constraints
         self._update_ics(window_ic.max())
@@ -628,9 +670,7 @@ class wormhole_traversal_udp:
         if log:
             fitness = f"{self._fitness[0]:>2.8}" if len(self._fitness) > 0 else ""
             logger.info(f"Fitness | {fitness}")
-            logger.info(
-                f"The provided chromosome is {'' if self._all_constraints_satisfied else 'not '}a solution"
-            )
+            logger.info(f"The provided chromosome is {'' if self._all_constraints_satisfied else 'not '}a solution")
 
         # Plot the paths if requested
         fig_ax = None
@@ -727,7 +767,7 @@ class wormhole_traversal_udp:
 
         Equality constraints:
             1. The first node in a ship's path must belong to that ship's predefined set of origin nodes.
-            2. The provided chromosome must define valid paths through the network .
+            2. The provided chromosome must define valid paths through the network.
 
         Returns:
             int:
@@ -808,7 +848,7 @@ class wormhole_traversal_udp:
 
     def example(
         self,
-        filename: FSPath = "./data/wormholes/example.npy",
+        filename: FSPath = "./data/spoc2/wormholes/example.npy",
     ) -> np.ndarray:
         """
         Return a minimal chromosome that satisfies the problem constraints.
@@ -870,9 +910,7 @@ class wormhole_traversal_udp:
 
             elif len(path) < self.jump_limit:
                 # Extend paths that are too short
-                path = np.concatenate(
-                    (path, np.zeros((self.jump_limit - len(path))))
-                ).astype(np.int32)
+                path = np.concatenate((path, np.zeros((self.jump_limit - len(path))))).astype(np.int32)
 
             # CRISPR the path into the chromosome
             chromosome[ship * self.jump_limit : (ship + 1) * self.jump_limit] = path

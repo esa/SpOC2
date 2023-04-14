@@ -17,6 +17,8 @@ While the quantum computers onboard the ships provide a pretty accurate estimate
 Of course, there is one important detail that we saved for last: although the ships are designed to withstand the stress of traversing a wormhole, they still suffer minor damage each time they dip below the event horizon. To guarantee the structural integrity of the ships, you must make sure that each ship navigates to the destination within a certain number of hyperspace jumps.
 
 Help find a feasible way through the wormhole network and save our intrepid adventurers from a fate of being forever lost in the mists of time!
+### N.B.
+In addition, diving under the event horizon of a black hole perturbs the space-time continuum, and therefore **all wormholes** connected to that black hole incur a multiplicative increase in temporal variance. In practical terms, this means that subsequent revisits to a black hole with any ship will result in an exponentially larger cost.
 
 ### Data
 
@@ -128,10 +130,10 @@ This is the only inequality constraint: `arrival_window_constraint = udp.fitness
 
 ### Objective
 
-The objective of the challenge is to **minimise the maximum sum of variances** of the arrival times for **any** ship, subject to the above constraints.
+The objective of the challenge is to **minimise the maximum sum of variances** (taking into account any revisits as detailed in the note above) of the arrival times for **any** ship, subject to the above constraints.
 
 $$
-\min_{x}J = \min(\max_{i}{\sum_{k}{\nu_{i,k}}})
+\min_{x}J = \min(\max_{i}{\sum_{k}{\nu_{i,k}}}) * 10000
 $$
 
 where $J$ is the cost of the path traversal and $\nu{i, k}$ is the variance of edge $k$ along the path taken by ship $i$.
@@ -154,9 +156,9 @@ where $J$ is the cost of the path traversal and $\nu{i, k}$ is the variance of e
 
 - To decode the information from a decision vector `x` into a summary printed on screen, call the `.pretty(x)` method.
 
-- Basic plots for solution visualisation purposes can be obtained by calling the `.plot(x)` method of the UDP (`x` is a chromosome).
+- Basic plots for solution visualisation purposes can be obtained by calling the `.plot(x)` method of the UDP.
 
-- An example chromosome is provided in the source code and can be evaluated by using the `.example()` method of the UDP. Please note that this solution corresponds to a minimal working example and should not be taken as a baseline for what the winning score should be.
+- A [NumPy array containing an example chromosome](https://api.optimize.esa.int/data/spoc2/wormholes/example.npy) can be uncompressed with the `.example()` method of the UDP and passed to the `fitness()` function for evaluation. Please note that this solution corresponds to a minimal working example and should not be taken as a baseline for what a competitive score should be.
 
 - For any decision vector `x`, the vector containing the fitness value and the equality and inequality constraint violations can be retrieved by using the `.fitness()` method of the UDP.
 
