@@ -133,7 +133,7 @@ This is the only inequality constraint: `arrival_window_constraint = udp.fitness
 The objective of the challenge is to **minimise the maximum sum of variances** (taking into account any revisits as detailed in the note above) of the arrival times for **any** ship, subject to the above constraints.
 
 $$
-\min_{x}J = \min(\max_{i}{\sum_{k}{\nu_{i,k}}}) * 10000
+\min_{x}J = \min(10^4 \cdot \max_{i}{\sum_{k}{\nu_{i,k}}})
 $$
 
 where $J$ is the cost of the path traversal and $\nu{i, k}$ is the variance of edge $k$ along the path taken by ship $i$.

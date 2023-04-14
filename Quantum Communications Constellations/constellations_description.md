@@ -115,7 +115,7 @@ Such cost is defined as a function of the number of satellites put in orbit as w
 
 These two objectives are in conflict with each other, as a good average shortest communication path ($J_1$) requires many satellites and a large $\eta$. The opposite is true for $J_2$.
 
-We are interested in the best possible trade-offs between those two objectives which also satisfies the aforementioned constraints. Consequently, you are tasked to submit a set of optimal trade-off solutions (e.g. a list of multiple different decision vectors) which should approximate the Pareto frontier of the problem. The quality of your approximated Pareto frontier will then be assessed by the [hypervolume indicator](https://esa.github.io/pygmo2/tutorials/hypervolume.html) with a reference point of $[1.4, 1.2]$ in objective space. Thus, only solutions with costs $J_1$ less than `1.4` and $J_2$ less than `1.2` will contribute to the hypervolume. Note that both $J_1$ and $J_2$ are normalized by some factor as to have similar magnitude. 
+We are interested in the best possible trade-offs between those two objectives which also satisfies the aforementioned constraints. Consequently, you are tasked to submit a set of optimal trade-off solutions (e.g. a list of multiple different decision vectors) which should approximate the Pareto frontier of the problem. The quality of your approximated Pareto frontier will then be assessed by the [hypervolume indicator](https://esa.github.io/pygmo2/tutorials/hypervolume.html) with a reference point of $[1.2, 1.4]$ in objective space, which we then multiply by 10000. Thus, only solutions with costs $J_1$ less than `1.4` and $J_2$ less than `1.2` will contribute to the hypervolume. Note that both $J_1$ and $J_2$ are normalized by some factor as to have similar magnitude. 
 
 ###Submitting
 
@@ -123,7 +123,7 @@ To submit a solution, you can prepare a submission file with the [submission hel
 
 ```python
 from submisson_helper import create_submission
-create_submission("spoc-quantum-constellations","quantum-constellations",x,"submission_file.json","submission_name","submission_description")
+create_submission("spoc-2-quantum-communications-constellations","quantum-communications-constellations",x,"submission_file.json","submission_name","submission_description")
 ```
 
 and [submit it](https://optimize.esa.int/submit). 
@@ -140,8 +140,8 @@ and [submit it](https://optimize.esa.int/submit).
     [
         {
                 "decisionVector": [ x1, x2, ... , x100 ],
-                "problem": "quantum-constellations",
-                "challenge": "spoc-quantum-constellations",
+                "problem": "quantum-communications-constellations",
+                "challenge": "spoc-2-quantum-communications-constellations",
         }
     ] 
     ```
