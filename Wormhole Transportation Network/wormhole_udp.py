@@ -332,8 +332,6 @@ class wormhole_traversal_udp:
 
         cost_ys *= self._fitness_scaling
 
-        cost_ys *= self._scaling
-
         cost_ax.bar(xs, cost_ys, color="magenta")
 
         cost_ax.set_title("Total path cost per ship")
