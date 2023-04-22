@@ -130,13 +130,21 @@ This is the only inequality constraint: `arrival_window_constraint = udp.fitness
 
 ### Objective
 
+In computing the fitness, node visits (by *any* ship) are ordered by time. The visit time $t^{v}_{n,i}$ of node `n` by ship `i` is the sum of the delay for that ship and the sum of the means of all edges along the path $path_{n}$ traversed so far up to node `n`:
+
+$$
+t^{v}_{n,i} = d_{i} + \sum_{k \in path_{n}}{\mu_{k}}
+$$
+
+Every time a node is visited *by any ship*, the variance of **all of its edges** increases by a factor of `10`, up to a maximum of $10^{10}$.
+
 The objective of the challenge is to **minimise the maximum sum of variances** (taking into account any revisits as detailed in the note above) of the arrival times for **any** ship, subject to the above constraints.
 
 $$
-\min_{x}J = \min(10^4 \cdot \max_{i}{\sum_{k}{\nu_{i,k}}})
+\min_{x}J = \min(10^4 \cdot \max_{i}{\sum_{k}{10^{s_{k}(t)-1}\nu_{i,k}}}),
 $$
 
-where $J$ is the cost of the path traversal and $\nu{i, k}$ is the variance of edge $k$ along the path taken by ship $i$.
+where $J$ is the cost of the path traversal and $\nu{i, k}$ is the variance of edge `k` along the path taken by ship `i`, and $s_{k}(t)$ is the number of times that the source node of edge `k` has been visited up to the time of the traversal.
 
 ### Utilities / Hints
 
